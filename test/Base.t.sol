@@ -7,7 +7,7 @@ import "forge-std/src/mocks/MockERC20.sol";
 import "src/GaugeManager.sol";
 import "src/interfaces/ILiquidityGauge.sol";
 
-abstract contract Base is Test {
+abstract contract BaseTest is Test {
     uint256 public blockNumber;
 
     string public chain;
