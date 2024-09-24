@@ -1,0 +1,32 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .:
+    devDependencies:
+      forge-std:
+        specifier: github:foundry-rs/forge-std
+        version: https://codeload.github.com/foundry-rs/forge-std/tar.gz/5a802d7c10abb4bbfb3e7214c75052ef9e6a06f8
+      solady:
+        specifier: github:vectorized/solady
+        version: https://codeload.github.com/vectorized/solady/tar.gz/42af395e631fcc9d640eddf11c57c6f1ca3f9103
+
+packages:
+
+  forge-std@https://codeload.github.com/foundry-rs/forge-std/tar.gz/5a802d7c10abb4bbfb3e7214c75052ef9e6a06f8:
+    resolution: {tarball: https://codeload.github.com/foundry-rs/forge-std/tar.gz/5a802d7c10abb4bbfb3e7214c75052ef9e6a06f8}
+    version: 1.9.2
+
+  solady@https://codeload.github.com/vectorized/solady/tar.gz/42af395e631fcc9d640eddf11c57c6f1ca3f9103:
+    resolution: {tarball: https://codeload.github.com/vectorized/solady/tar.gz/42af395e631fcc9d640eddf11c57c6f1ca3f9103}
+    version: 0.0.243
+
+snapshots:
+
+  forge-std@https://codeload.github.com/foundry-rs/forge-std/tar.gz/5a802d7c10abb4bbfb3e7214c75052ef9e6a06f8: {}
+
+  solady@https://codeload.github.com/vectorized/solady/tar.gz/42af395e631fcc9d640eddf11c57c6f1ca3f9103: {}
