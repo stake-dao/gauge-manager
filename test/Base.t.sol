@@ -100,7 +100,7 @@ abstract contract BaseTest is Test {
         vm.expectRevert(GaugeManager.NotAgent.selector);
         gaugeManager.setGaugeManager(gauge, address(0xBEEF));
 
-        if (block.chainid == 1) { 
+        if (block.chainid == 1) {
             vm.prank(agent);
             gaugeManager.setGaugeManager(gauge, address(0xBEEF));
             assertEq(ILiquidityGauge(gauge).manager(), address(0xBEEF));

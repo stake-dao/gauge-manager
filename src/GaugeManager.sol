@@ -96,6 +96,7 @@ contract GaugeManager {
 
     ////////////////////////////////////////////////////////////
     /// --- CURVE ADMIN FUNCTIONS
+    /// @dev These functions are used by the Curve.fi Agent, and most likely can be triggered only on L1. (for now)
     ////////////////////////////////////////////////////////////
 
     function setGaugeManager(address gauge, address manager) public onlyAgent {
