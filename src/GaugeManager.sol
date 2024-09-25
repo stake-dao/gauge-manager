@@ -58,7 +58,7 @@ contract GaugeManager {
     }
 
     /// @notice Modifier to check if the caller is a manager of the given gauge.
-    modifier onlyManager(address gauge) {
+    modifier onlyManagerOrAgent(address gauge) {
         if (managers[gauge] != msg.sender && msg.sender != AGENT) revert NotManager();
         _;
     }
@@ -82,12 +82,12 @@ contract GaugeManager {
     }
 
     /// @notice Set the manager of the given gauge.
-    function setManager(address gauge, address manager) public onlyManager(gauge) {
+    function setManager(address gauge, address manager) public onlyManagerOrAgent(gauge) {
         managers[gauge] = manager;
     }
 
     /// @notice Add a reward token to the given gauge.
-    function addReward(address gauge, address token) public onlyManager(gauge) {
+    function addReward(address gauge, address token) public onlyManagerOrAgent(gauge) {
         ILiquidityGauge(gauge).add_reward(token, address(this));
     }
 
