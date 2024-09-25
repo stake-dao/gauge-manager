@@ -12,6 +12,7 @@ abstract contract BaseTest is Test {
 
     string public chain;
     address lpToken;
+    address public gauge;
     address public agent;
     address public factory;
     address public gaugeImplementation;
@@ -20,12 +21,19 @@ abstract contract BaseTest is Test {
 
     GaugeManager public gaugeManager;
 
-    constructor(string memory _chain, address _agent, address _factory, address _lpToken, uint256 _blockNumber) {
+    constructor(
+        string memory _chain,
+        address _gauge,
+        address _agent,
+        address _factory,
+        address _lpToken,
+        uint256 _blockNumber
+    ) {
         chain = _chain;
         agent = _agent;
         factory = _factory;
         lpToken = _lpToken;
-
+        gauge = _gauge;
         blockNumber = _blockNumber;
     }
 
@@ -47,83 +55,113 @@ abstract contract BaseTest is Test {
     }
 
     function test_deployGauge() public {
-        address gauge = gaugeManager.deployGauge(lpToken);
-        assertNotEq(gauge, address(0));
-        assertEq(ILiquidityGauge(gauge).lp_token(), lpToken);
+        address _gauge = gaugeManager.deployGauge(lpToken);
+        assertNotEq(_gauge, address(0));
+        assertEq(ILiquidityGauge(_gauge).lp_token(), lpToken);
 
         if (block.chainid == 1) {
             vm.expectRevert("Gauge is already initialized");
         } else {
             vm.expectRevert();
         }
-        ILiquidityGauge(gauge).initialize(lpToken, address(gaugeManager));
+        ILiquidityGauge(_gauge).initialize(lpToken, address(gaugeManager));
 
-        assertTrue(gaugeManager.managers(gauge, address(this)));
-        assertFalse(gaugeManager.managers(gauge, address(0xBEEF)));
+        assertEq(gaugeManager.managers(_gauge), address(this));
 
         /// 1. Test transferring the gauge to another manager
         address newManager = address(0x123);
 
         vm.expectRevert(GaugeManager.NotManager.selector);
         vm.prank(address(0xBEEF));
-        gaugeManager.setManager(gauge, newManager);
+        gaugeManager.setManager(_gauge, newManager);
 
-        gaugeManager.setManager(gauge, newManager);
-        assertTrue(gaugeManager.managers(gauge, newManager));
-        assertFalse(gaugeManager.managers(gauge, address(this)));
+        gaugeManager.setManager(_gauge, newManager);
+        assertEq(gaugeManager.managers(_gauge), newManager);
 
         /// 2. Test adding a reward token
         vm.expectRevert(GaugeManager.NotManager.selector);
         vm.prank(address(0xBEEF));
-        gaugeManager.addReward(gauge, address(rewardToken));
+        gaugeManager.addReward(_gauge, address(rewardToken));
 
         vm.prank(newManager);
-        gaugeManager.addReward(gauge, address(rewardToken));
+        gaugeManager.addReward(_gauge, address(rewardToken));
 
-        assertEq(ILiquidityGauge(gauge).reward_count(), 1);
-        assertEq(ILiquidityGauge(gauge).reward_tokens(0), address(rewardToken));
+        assertEq(ILiquidityGauge(_gauge).reward_count(), 1);
+        assertEq(ILiquidityGauge(_gauge).reward_tokens(0), address(rewardToken));
 
-        ILiquidityGauge.Reward memory reward = ILiquidityGauge(gauge).reward_data(address(rewardToken));
+        ILiquidityGauge.Reward memory reward = ILiquidityGauge(_gauge).reward_data(address(rewardToken));
         assertEq(reward.distributor, address(gaugeManager));
 
         /// 3. Test depositing a reward token
         deal(address(rewardToken), address(this), 100 ether);
         rewardToken.approve(address(gaugeManager), 100 ether);
-        gaugeManager.depositRewardToken(gauge, address(rewardToken), 100 ether);
+        gaugeManager.depositRewardToken(_gauge, address(rewardToken), 100 ether);
 
-        assertEq(rewardToken.balanceOf(address(gauge)), 100 ether);
-        reward = ILiquidityGauge(gauge).reward_data(address(rewardToken));
+        assertEq(rewardToken.balanceOf(address(_gauge)), 100 ether);
+        reward = ILiquidityGauge(_gauge).reward_data(address(rewardToken));
         assertEq(reward.periodFinish, block.timestamp + 1 weeks);
         assertEq(reward.lastUpdate, block.timestamp);
 
         /// 4. CURVE ADMIN: Test setting the gauge manager
         vm.expectRevert(GaugeManager.NotAgent.selector);
-        gaugeManager.setGaugeManager(gauge, address(0xBEEF));
+        gaugeManager.setGaugeManager(_gauge, address(0xBEEF));
 
         if (block.chainid == 1) {
             vm.prank(agent);
-            gaugeManager.setGaugeManager(gauge, address(0xBEEF));
-            assertEq(ILiquidityGauge(gauge).manager(), address(0xBEEF));
+            gaugeManager.setGaugeManager(_gauge, address(0xBEEF));
+            assertEq(ILiquidityGauge(_gauge).manager(), address(0xBEEF));
 
             /// 5. CURVE ADMIN: Test setting the killed flag
             vm.expectRevert(GaugeManager.NotAgent.selector);
-            gaugeManager.setKilled(gauge, true);
+            gaugeManager.setKilled(_gauge, true);
 
             vm.prank(agent);
-            gaugeManager.setKilled(gauge, true);
-            assertTrue(ILiquidityGauge(gauge).is_killed());
+            gaugeManager.setKilled(_gauge, true);
+            assertTrue(ILiquidityGauge(_gauge).is_killed());
 
             vm.prank(agent);
-            gaugeManager.setKilled(gauge, false);
-            assertFalse(ILiquidityGauge(gauge).is_killed());
+            gaugeManager.setKilled(_gauge, false);
+            assertFalse(ILiquidityGauge(_gauge).is_killed());
 
             /// 6. CURVE ADMIN: Test setting the reward distributor
             vm.expectRevert(GaugeManager.NotAgent.selector);
-            gaugeManager.setRewardDistributor(gauge, address(rewardToken), address(0xBEEF));
+            gaugeManager.setRewardDistributor(_gauge, address(rewardToken), address(0xBEEF));
 
             vm.prank(agent);
-            gaugeManager.setRewardDistributor(gauge, address(rewardToken), address(0xBEEF));
-            assertEq(ILiquidityGauge(gauge).reward_data(address(rewardToken)).distributor, address(0xBEEF));
+            gaugeManager.setRewardDistributor(_gauge, address(rewardToken), address(0xBEEF));
+            assertEq(ILiquidityGauge(_gauge).reward_data(address(rewardToken)).distributor, address(0xBEEF));
         }
+    }
+
+    function test_migrateGauge() public {
+        address _agent = agent;
+        if (block.chainid != 1) {
+            agent = IFactory(ILiquidityGauge(gauge).factory()).owner();
+        }
+
+        uint256 rewardCount = ILiquidityGauge(gauge).reward_count();
+        for (uint256 i; i < rewardCount; i++) {
+            address _rewardToken = ILiquidityGauge(gauge).reward_tokens(i);
+
+            vm.prank(agent);
+            ILiquidityGauge(gauge).set_reward_distributor(_rewardToken, address(gaugeManager));
+        }
+
+        vm.prank(agent);
+        ILiquidityGauge(gauge).add_reward(address(rewardToken), agent);
+
+        vm.prank(agent);
+        if (block.chainid == 1) {
+            ILiquidityGauge(gauge).set_gauge_manager(address(gaugeManager));
+        } else {
+            ILiquidityGauge(gauge).set_manager(address(gaugeManager));
+        }
+
+        vm.prank(_agent);
+        vm.expectRevert(GaugeManager.InvalidRewardDistributor.selector);
+        gaugeManager.claimManager(gauge, address(0xBEEF));
+
+        // assertEq(gaugeManager.managers(gauge), address(0xBEEF));
+        // assertEq(ILiquidityGauge(gauge).manager(), address(gaugeManager));
     }
 }

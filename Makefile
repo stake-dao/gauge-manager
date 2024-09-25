@@ -29,50 +29,10 @@ test-m-%:
 	script_path="test/$$network/"; \
 	FOUNDRY_TEST=$$script_path make test; \
 
-test-%:
-	@network=$$(echo "$*" | cut -d'-' -f1); \
-	project=$$(echo "$*" | cut -d'-' -f2); \
-	file=$$(echo "$*" | cut -d'-' -f3-); \
-	capitalized_file=$$(echo "$$file" | tr '[:lower:]' '[:upper:]' | cut -c1)$$(echo "$$file" | cut -c2-); \
-	script_path="test/$$network/$$project/$$capitalized_file.t.sol"; \
-	if [ -f "$$script_path" ]; then \
-		echo "Running test: $$script_path"; \
-		FOUNDRY_TEST=$$script_path make test; \
-	else \
-		echo "Test file not found: $$script_path"; \
-		exit 1; \
-	fi
 
 coverage:
 	@forge coverage --report lcov
 	@lcov --remove lcov.info 'test/*' -o lcov.info --ignore-errors unused
 	@genhtml lcov.info --output-directory coverage
-
-simulate-%:
-	make default
-	@echo "Target: $@"
-	@echo "Match: $*"
-	@dirs=$$(echo $* | tr '-' '/'); \
-	script_path="script/$$dirs/Deploy.s.sol"; \
-	echo "Attempting to simulate: $$script_path"; \
-	if [ -f "$$script_path" ]; then \
-		forge script "$$script_path:Deploy" -vvvvv; \
-	else \
-		echo "Error: $$script_path does not exist"; \
-		exit 1; \
-	fi
-
-deploy-%:
-	@echo "Target: $@"
-	@echo "Match: $*"
-	@dirs=$$(echo $* | tr '-' '/'); \
-	script_path="script/$$dirs/Deploy.s.sol"; \
-	echo "Attempting to deploy: $$script_path"; \
-	if [ -f "$$script_path" ]; then \
-		forge script "$$script_path:Deploy" --broadcast --slow -vvvvv --private-key $(PRIVATE_KEY);\
-	else \
-		echo "Error: $$script_path does not exist"; \
-		exit 1; \
-	fi
 
 .PHONY: test coverage

@@ -17,10 +17,12 @@ interface ILiquidityGauge {
     function reward_data(address token) external view returns (Reward memory);
 
     function set_killed(bool isKilled) external;
+    function set_manager(address manager) external;
     function set_gauge_manager(address manager) external;
     function set_reward_distributor(address token, address distributor) external;
 
     function manager() external view returns (address);
+    function factory() external view returns (address);
     function lp_token() external view returns (address);
     function reward_count() external view returns (uint256);
     function reward_tokens(uint256 index) external view returns (address);

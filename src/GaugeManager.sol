@@ -24,7 +24,7 @@ contract GaugeManager {
     address public immutable GAUGE_IMPLEMENTATION;
 
     /// @notice Mapping of managers for gauges.
-    mapping(address => mapping(address => bool)) public managers;
+    mapping(address => address) public managers;
 
     constructor(address _agent, address _factory, address _gaugeImplementation) {
         CHAIN_ID = block.chainid;
@@ -36,11 +36,20 @@ contract GaugeManager {
     /// @notice Emitted when a gauge is deployed.
     event GaugeDeployed(address gauge, address manager);
 
+    /// @notice Error thrown when the manager is not the gauge manager.
+    error InvalidManager();
+
+    /// @notice Error thrown when the reward distributor is not the agent.
+    error InvalidRewardDistributor();
+
     /// @notice Error thrown when the caller is not a manager of the given gauge.
     error NotManager();
 
     /// @notice Error thrown when the caller is not the agent.
     error NotAgent();
+
+    /// @notice Error thrown when the gauge is already claimed.
+    error AlreadyClaimed();
 
     /// @notice Error thrown when the caller is not the agent.
     modifier onlyAgent() {
@@ -50,7 +59,7 @@ contract GaugeManager {
 
     /// @notice Modifier to check if the caller is a manager of the given gauge.
     modifier onlyManager(address gauge) {
-        if (!managers[gauge][msg.sender] && msg.sender != AGENT) revert NotManager();
+        if (managers[gauge] != msg.sender && msg.sender != AGENT) revert NotManager();
         _;
     }
 
@@ -67,30 +76,24 @@ contract GaugeManager {
         }
 
         /// Set the manager.
-        managers[gauge][msg.sender] = true;
+        managers[gauge] = msg.sender;
 
         emit GaugeDeployed(gauge, msg.sender);
     }
 
     /// @notice Set the manager of the given gauge.
     function setManager(address gauge, address manager) public onlyManager(gauge) {
-        /// Reset the old manager
-        managers[gauge][msg.sender] = false;
-
-        /// Set the new manager
-        managers[gauge][manager] = true;
+        managers[gauge] = manager;
     }
 
     /// @notice Add a reward token to the given gauge.
     function addReward(address gauge, address token) public onlyManager(gauge) {
         ILiquidityGauge(gauge).add_reward(token, address(this));
-
-        SafeTransferLib.safeApproveWithRetry(token, gauge, type(uint256).max);
     }
 
     function depositRewardToken(address gauge, address token, uint256 amount) public {
         SafeTransferLib.safeTransferFrom(token, msg.sender, address(this), amount);
-
+        SafeTransferLib.safeApproveWithRetry(token, gauge, amount);
         ILiquidityGauge(gauge).deposit_reward_token(token, amount);
     }
 
@@ -98,6 +101,23 @@ contract GaugeManager {
     /// --- CURVE ADMIN FUNCTIONS
     /// @dev These functions are used by the Curve.fi Agent, and most likely can be triggered only on L1. (for now)
     ////////////////////////////////////////////////////////////
+
+    function claimManager(address gauge, address manager) public onlyAgent {
+        if (managers[gauge] != address(0)) revert AlreadyClaimed();
+        if (ILiquidityGauge(gauge).manager() != address(this)) revert InvalidManager();
+
+        uint256 rewardCount = ILiquidityGauge(gauge).reward_count();
+
+        for (uint256 i = 0; i < rewardCount; i++) {
+            address token = ILiquidityGauge(gauge).reward_tokens(i);
+            ILiquidityGauge.Reward memory reward = ILiquidityGauge(gauge).reward_data(token);
+            if (reward.distributor != address(this)) {
+                revert InvalidRewardDistributor();
+            }
+        }
+
+        managers[gauge] = manager;
+    }
 
     function setGaugeManager(address gauge, address manager) public onlyAgent {
         ILiquidityGauge(gauge).set_gauge_manager(manager);
