@@ -21,6 +21,8 @@ abstract contract BaseTest is Test {
 
     GaugeManager public gaugeManager;
 
+    address public constant ROOT_GAUGE_FACTORY = address(0x306A45a1478A000dC701A6e1f7a569afb8D9DCD6);
+
     constructor(
         string memory _chain,
         address _gauge,
@@ -45,6 +47,11 @@ abstract contract BaseTest is Test {
 
         rewardToken = new MockERC20();
         rewardToken.initialize("Reward Token", "RT", 18);
+
+        if (factory != address(0)) {
+            vm.prank(IFactory(factory).future_owner());
+            IFactory(factory).accept_transfer_ownership();
+        }
     }
 
     function testDeployment() public view {
@@ -106,30 +113,24 @@ abstract contract BaseTest is Test {
         vm.expectRevert(GaugeManager.NotAgent.selector);
         gaugeManager.setGaugeManager(_gauge, address(0xBEEF));
 
-        if (block.chainid == 1) {
-            vm.prank(agent);
-            gaugeManager.setGaugeManager(_gauge, address(0xBEEF));
-            assertEq(ILiquidityGauge(_gauge).manager(), address(0xBEEF));
+        vm.prank(agent);
+        gaugeManager.setGaugeManager(_gauge, address(0xBEEF));
+        assertEq(ILiquidityGauge(_gauge).manager(), address(0xBEEF));
 
-            /// 5. CURVE ADMIN: Test setting the killed flag
-            vm.expectRevert(GaugeManager.NotAgent.selector);
-            gaugeManager.setKilled(_gauge, true);
+        /// 6. CURVE ADMIN: Test setting the reward distributor
+        vm.expectRevert(GaugeManager.NotAgent.selector);
+        gaugeManager.setRewardDistributor(_gauge, address(rewardToken), address(0xBEEF));
 
-            vm.prank(agent);
-            gaugeManager.setKilled(_gauge, true);
-            assertTrue(ILiquidityGauge(_gauge).is_killed());
+        vm.prank(agent);
+        gaugeManager.setRewardDistributor(_gauge, address(rewardToken), address(0xBEEF));
+        assertEq(ILiquidityGauge(_gauge).reward_data(address(rewardToken)).distributor, address(0xBEEF));
 
-            vm.prank(agent);
-            gaugeManager.setKilled(_gauge, false);
-            assertFalse(ILiquidityGauge(_gauge).is_killed());
-
-            /// 6. CURVE ADMIN: Test setting the reward distributor
-            vm.expectRevert(GaugeManager.NotAgent.selector);
-            gaugeManager.setRewardDistributor(_gauge, address(rewardToken), address(0xBEEF));
-
-            vm.prank(agent);
-            gaugeManager.setRewardDistributor(_gauge, address(rewardToken), address(0xBEEF));
-            assertEq(ILiquidityGauge(_gauge).reward_data(address(rewardToken)).distributor, address(0xBEEF));
+        uint256 chainId = block.chainid;
+        if (chainId != 1) {
+            vm.createSelectFork(vm.rpcUrl("mainnet"));
+            bytes32 salt = bytes32(abi.encode(lpToken, address(gaugeManager)));
+            address _rootGauge = IFactory(ROOT_GAUGE_FACTORY).deploy_gauge(chainId, salt);
+            assertEq(ILiquidityGauge(_rootGauge).child_gauge(), _gauge);
         }
     }
 

@@ -123,10 +123,6 @@ contract GaugeManager {
         ILiquidityGauge(gauge).set_gauge_manager(manager);
     }
 
-    function setKilled(address gauge, bool isKilled) public onlyAgent {
-        ILiquidityGauge(gauge).set_killed(isKilled);
-    }
-
     function setRewardDistributor(address gauge, address token, address distributor) public onlyAgent {
         ILiquidityGauge(gauge).set_reward_distributor(token, distributor);
     }

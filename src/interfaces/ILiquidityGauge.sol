@@ -24,6 +24,7 @@ interface ILiquidityGauge {
     function manager() external view returns (address);
     function factory() external view returns (address);
     function lp_token() external view returns (address);
+    function child_gauge() external view returns (address);
     function reward_count() external view returns (uint256);
     function reward_tokens(uint256 index) external view returns (address);
     function is_killed() external view returns (bool);

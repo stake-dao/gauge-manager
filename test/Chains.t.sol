@@ -24,7 +24,7 @@ contract Arbitrum is
 string constant BASE = "base";
 address constant BASE_LP_TOKEN = address(0xf6C5F01C7F3148891ad0e19DF78743D31E390D1f);
 address constant BASE_GAUGE = address(0x93933FA992927284e9d508339153B31eb871e1f4);
-address constant BASE_AGENT = address(0xe8269B33E47761f552E1a3070119560d5fa8bBD6);
+address constant BASE_AGENT = address(0x2c163fe0f079d138b9c04f780d735289344C8B80);
 address constant BASE_FACTORY = address(0xe35A879E5EfB4F1Bb7F70dCF3250f2e19f096bd8);
 
 contract Base is BaseTest(BASE, BASE_GAUGE, BASE_AGENT, BASE_FACTORY, BASE_LP_TOKEN, 19_939_297) {}
