@@ -149,20 +149,26 @@ abstract contract BaseTest is Test {
         }
 
         vm.prank(agent);
-        ILiquidityGauge(gauge).add_reward(address(rewardToken), agent);
-
-        vm.prank(agent);
         if (block.chainid == 1) {
             ILiquidityGauge(gauge).set_gauge_manager(address(gaugeManager));
         } else {
             ILiquidityGauge(gauge).set_manager(address(gaugeManager));
         }
 
+        vm.prank(agent);
+        ILiquidityGauge(gauge).add_reward(address(rewardToken), agent);
+
         vm.prank(_agent);
         vm.expectRevert(GaugeManager.InvalidRewardDistributor.selector);
-        gaugeManager.claimManager(gauge, address(0xBEEF));
+        gaugeManager.claimManager(gauge, address(0xBEEF), block.chainid == 1 ? true : false);
 
-        // assertEq(gaugeManager.managers(gauge), address(0xBEEF));
-        // assertEq(ILiquidityGauge(gauge).manager(), address(gaugeManager));
+        vm.prank(agent);
+        ILiquidityGauge(gauge).set_reward_distributor(address(rewardToken), address(gaugeManager));
+
+        vm.prank(_agent);
+        gaugeManager.claimManager(gauge, address(0xBEEF), block.chainid == 1 ? true : false);
+
+        assertEq(gaugeManager.managers(gauge), address(0xBEEF));
+        assertEq(ILiquidityGauge(gauge).manager(), address(gaugeManager));
     }
 }

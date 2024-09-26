@@ -3,6 +3,7 @@ pragma solidity 0.8.19;
 
 import "src/interfaces/IFactory.sol";
 import "src/interfaces/ILiquidityGauge.sol";
+import "src/interfaces/ILiquidityGaugeV1.sol";
 
 import "solady/src/utils/LibClone.sol";
 import "solady/src/utils/SafeTransferLib.sol";
@@ -38,6 +39,9 @@ contract GaugeManager {
 
     /// @notice Error thrown when the manager is not the gauge manager.
     error InvalidManager();
+
+    /// @notice Error thrown when the call to the gauge fails.
+    error CallFailed();
 
     /// @notice Error thrown when the reward distributor is not the agent.
     error InvalidRewardDistributor();
@@ -102,19 +106,34 @@ contract GaugeManager {
     /// @dev These functions are used by the Curve.fi Agent, and most likely can be triggered only on L1. (for now)
     ////////////////////////////////////////////////////////////
 
-    function claimManager(address gauge, address manager) public onlyAgent {
+    function claimManager(address gauge, address manager, bool isV1) public onlyAgent {
         if (managers[gauge] != address(0)) revert AlreadyClaimed();
-        if (ILiquidityGauge(gauge).manager() != address(this)) revert InvalidManager();
 
+        /// 1. Need to check that all reward tokens are distributed by this contract.
         uint256 rewardCount = ILiquidityGauge(gauge).reward_count();
-
         for (uint256 i = 0; i < rewardCount; i++) {
             address token = ILiquidityGauge(gauge).reward_tokens(i);
-            ILiquidityGauge.Reward memory reward = ILiquidityGauge(gauge).reward_data(token);
-            if (reward.distributor != address(this)) {
+
+            (bool success, bytes memory rewardData) =
+                gauge.staticcall(abi.encodeWithSelector(ILiquidityGauge.reward_data.selector, token));
+            if (!success) revert CallFailed();
+
+            address rewardDistributor;
+            if (isV1) {
+                ILiquidityGaugeV1.Reward memory reward = abi.decode(rewardData, (ILiquidityGaugeV1.Reward));
+                rewardDistributor = reward.distributor;
+            } else {
+                ILiquidityGauge.Reward memory reward = abi.decode(rewardData, (ILiquidityGauge.Reward));
+                rewardDistributor = reward.distributor;
+            }
+
+            if (rewardDistributor != address(this)) {
                 revert InvalidRewardDistributor();
             }
         }
+
+        /// 2. Need to check that the manager is set to this contract.
+        if (ILiquidityGauge(gauge).manager() != address(this)) revert InvalidManager();
 
         managers[gauge] = manager;
     }
