@@ -2,6 +2,14 @@
 pragma solidity 0.8.19;
 
 interface ILiquidityGauge {
+    struct RewardV1 {
+        address token;
+        address distributor;
+        uint256 periodFinish;
+        uint256 rate;
+        uint256 lastUpdate;
+        uint256 integral;
+    }
     struct Reward {
         address distributor;
         uint256 periodFinish;

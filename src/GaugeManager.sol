@@ -3,7 +3,6 @@ pragma solidity 0.8.19;
 
 import "src/interfaces/IFactory.sol";
 import "src/interfaces/ILiquidityGauge.sol";
-import "src/interfaces/ILiquidityGaugeV1.sol";
 
 import "solady/src/utils/LibClone.sol";
 import "solady/src/utils/SafeTransferLib.sol";
@@ -120,7 +119,7 @@ contract GaugeManager {
 
             address rewardDistributor;
             if (isV1) {
-                ILiquidityGaugeV1.Reward memory reward = abi.decode(rewardData, (ILiquidityGaugeV1.Reward));
+                ILiquidityGauge.RewardV1 memory reward = abi.decode(rewardData, (ILiquidityGauge.RewardV1));
                 rewardDistributor = reward.distributor;
             } else {
                 ILiquidityGauge.Reward memory reward = abi.decode(rewardData, (ILiquidityGauge.Reward));
