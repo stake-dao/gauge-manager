@@ -7,3 +7,6 @@ Gauge Manager is a contract that allows to deploy liquidity gauges on multiple n
 Regular admin functions are restricted to the on-chain governance of the platform built-upon, here Curve.fi.
 
 It is built to overcome the limitation where only one eligible address can provide extra rewards to a gauge, by being the reward distributor.
+
+
+Diffchecker between the original and the forked curve gauge: [Diffchecker](https://www.diffchecker.com/DgtQBG6Y)
