@@ -59,6 +59,7 @@ abstract contract BaseTest is Test {
         assertEq(gaugeManager.FACTORY(), factory);
         assertEq(gaugeManager.GAUGE_IMPLEMENTATION(), gaugeImplementation);
         assertEq(gaugeManager.CHAIN_ID(), block.chainid);
+        assertEq(gaugeManager.admin(), address(gaugeManager));
     }
 
     function test_deployGauge() public {

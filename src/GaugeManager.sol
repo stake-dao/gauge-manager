@@ -148,6 +148,6 @@ contract GaugeManager {
     /// @notice Returns the address of this contract.
     /// @dev To be compatible with the gauge implementation, with minimum changes.
     function admin() public view returns (address) {
-        return address(this);
+        return AGENT;
     }
 }
