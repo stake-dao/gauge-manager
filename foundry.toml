@@ -5,7 +5,7 @@ libs = ["node_modules"]
 solc = "0.8.19"
 evm_version = "shanghai"
 
-verbosity = 3
+verbosity = 4
 optimizers_runs = 200
 
 [fuzz]

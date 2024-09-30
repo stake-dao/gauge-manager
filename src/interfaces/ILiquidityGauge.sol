@@ -10,6 +10,7 @@ interface ILiquidityGauge {
         uint256 lastUpdate;
         uint256 integral;
     }
+
     struct Reward {
         address distributor;
         uint256 periodFinish;

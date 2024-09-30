@@ -29,6 +29,15 @@ test-m-%:
 	script_path="test/$$network/"; \
 	FOUNDRY_TEST=$$script_path make test; \
 
+simulate-%:
+	@network=$$(echo "$*" | cut -d'-' -f1); \
+	script_path="script/Chain.s.sol:$$network"; \
+	forge script $$script_path;
+
+deploy-%:
+	@network=$$(echo "$*" | cut -d'-' -f1); \
+	script_path="script/Chain.s.sol:$$network"; \
+	forge script $$script_path --broadcast --private-key $$PRIVATE_KEY; \
 
 coverage:
 	@forge coverage --report lcov
