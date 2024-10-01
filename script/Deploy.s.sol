@@ -32,9 +32,9 @@ abstract contract Deploy is Script {
         /// 1. Deploy the LiquidityGauge Implementation.
         bytes memory gaugeImplementationCode = vm.getCode("LiquidityGauge");
 
-        address gaugeImplementation; 
-        
-        if(block.chainid == 1) {
+        address gaugeImplementation;
+
+        if (block.chainid == 1) {
             gaugeImplementation = IImmutableFactory(FACTORY).deployCreate3(salt, gaugeImplementationCode);
         } else {
             gaugeImplementation = address(0);

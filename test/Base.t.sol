@@ -135,7 +135,7 @@ abstract contract BaseTest is Test {
         }
     }
 
-    function test_migrateGauge() public {
+    function test_migrateGaugeWithGovernance() public {
         address _agent = agent;
         if (block.chainid != 1) {
             agent = IFactory(ILiquidityGauge(gauge).factory()).owner();
@@ -168,6 +168,44 @@ abstract contract BaseTest is Test {
 
         vm.prank(_agent);
         gaugeManager.claimManager(gauge, address(0xBEEF), block.chainid == 1 ? true : false);
+
+        assertEq(gaugeManager.managers(gauge), address(0xBEEF));
+        assertEq(ILiquidityGauge(gauge).manager(), address(gaugeManager));
+    }
+
+    function test_migrateGaugeWithTransfer() public {
+        if (block.chainid != 1) {
+            return;
+        }
+
+        address _gauge = gaugeManager.deployGauge(lpToken);
+        address manager = ILiquidityGauge(gauge).manager();
+
+        vm.expectRevert(GaugeManager.NotManager.selector);
+        gaugeManager.transferManager(gauge);
+
+        vm.expectRevert(GaugeManager.NotManager.selector);
+        gaugeManager.transferManager(_gauge);
+
+        vm.prank(manager);
+        gaugeManager.transferManager(gauge);
+
+        vm.prank(manager);
+        ILiquidityGauge(gauge).add_reward(address(rewardToken), agent);
+
+        uint256 rewardCount = ILiquidityGauge(gauge).reward_count();
+        for (uint256 i; i < rewardCount; i++) {
+            address _rewardToken = ILiquidityGauge(gauge).reward_tokens(i);
+
+            vm.prank(manager);
+            ILiquidityGauge(gauge).set_reward_distributor(_rewardToken, address(gaugeManager));
+        }
+
+        vm.prank(manager);
+        ILiquidityGauge(gauge).set_gauge_manager(address(gaugeManager));
+
+        vm.prank(manager);
+        gaugeManager.claimManager(gauge, address(0xBEEF), true);
 
         assertEq(gaugeManager.managers(gauge), address(0xBEEF));
         assertEq(ILiquidityGauge(gauge).manager(), address(gaugeManager));

@@ -26,6 +26,9 @@ contract GaugeManager {
     /// @notice Mapping of managers for gauges.
     mapping(address => address) public managers;
 
+    /// @notice Mapping of gauges to their transferring manager.
+    mapping(address => address) public transferringManagers;
+
     constructor(address _agent, address _factory, address _gaugeImplementation) {
         CHAIN_ID = block.chainid;
         AGENT = _agent;
@@ -38,6 +41,9 @@ contract GaugeManager {
 
     /// @notice Error thrown when the manager is not the gauge manager.
     error InvalidManager();
+
+    /// @notice Error thrown when the caller is not a transferring manager of the given gauge.
+    error NotTransferringManager();
 
     /// @notice Error thrown when the call to the gauge fails.
     error CallFailed();
@@ -63,6 +69,12 @@ contract GaugeManager {
     /// @notice Modifier to check if the caller is a manager of the given gauge.
     modifier onlyManagerOrAgent(address gauge) {
         if (managers[gauge] != msg.sender && msg.sender != AGENT) revert NotManager();
+        _;
+    }
+
+    /// @notice Modifier to check if the caller is a transferring manager of the given gauge.
+    modifier onlyTransferringManagerOrAgent(address gauge) {
+        if (transferringManagers[gauge] != msg.sender && msg.sender != AGENT) revert NotTransferringManager();
         _;
     }
 
@@ -105,7 +117,16 @@ contract GaugeManager {
     /// @dev These functions are used by the Curve.fi Agent, and most likely can be triggered only on L1. (for now)
     ////////////////////////////////////////////////////////////
 
-    function claimManager(address gauge, address manager, bool isV1) public onlyAgent {
+    /// @notice To trigger before transferring the manager to this contract.
+    function transferManager(address gauge) public {
+        address manager = ILiquidityGauge(gauge).manager();
+        if (msg.sender != manager) revert NotManager();
+
+        transferringManagers[gauge] = manager;
+    }
+
+    /// @notice To trigger after transferring the manager to this contract and setting the reward distributor.
+    function claimManager(address gauge, address manager, bool isV1) public onlyTransferringManagerOrAgent(gauge) {
         if (managers[gauge] != address(0)) revert AlreadyClaimed();
 
         /// 1. Need to check that all reward tokens are distributed by this contract.
@@ -134,7 +155,11 @@ contract GaugeManager {
         /// 2. Need to check that the manager is set to this contract.
         if (ILiquidityGauge(gauge).manager() != address(this)) revert InvalidManager();
 
+        /// 3. Set the manager.
         managers[gauge] = manager;
+
+        /// 4. Reset the transferring manager.
+        transferringManagers[gauge] = address(0);
     }
 
     function setGaugeManager(address gauge, address manager) public onlyAgent {
