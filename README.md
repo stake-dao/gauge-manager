@@ -40,3 +40,21 @@ Process is in two steps:
 ROOT_FACTORY: [0x306A45a1478A000dC701A6e1f7a569afb8D9DCD6](https://etherscan.io/address/0x306A45a1478A000dC701A6e1f7a569afb8D9DCD6)
 
 The result of step 2 should be a gauge on the mainnet, with `child_gauge()` pointing to the gauge deployed in step 1.
+
+### Migration of an existing gauge
+
+In order to migrate an existing gauge and set the manager to the gauge manager, the steps are the following:
+
+Gauge manager:
+1. On the gauge manager, call `transferManager(gauge)` with the manager address. This steps is necessary to retrieve the manager ROLE later.
+
+Gauge:
+
+2. Set the reward distributor of all extra rewards to the gauge manager.
+3. Transfer the manager to the gauge manager using `set_gauge_manager(gaugeManager)`.
+
+Gauge manager:
+
+4. Call `claimManager(gauge, manager, isV1)` with the manager address. This steps is necessary to complete the migration. It'll check that the previous steps were correctly executed and set the maanger address as allowed address to provide extra rewards.
+
+If using the manager address is not possible, this process can be done using the Curve Governance veCRV, doing all the steps starting from the step 2 for the gauge.
