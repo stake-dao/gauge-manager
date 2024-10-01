@@ -35,6 +35,8 @@ The mainnet gauge manager uses a custom liquidity gauge implementation. Just hit
 For the sidechains, the gauge manager uses the Curve Factory. 
 Process is in two steps:
 1. Deploy the gauge using the gauge manager.
-2. With the salt used in the first step, create the curve gauge on the mainnet using the `ROOT_FACTORY` address`
+2. With the salt used in the first step, create the curve gauge on the mainnet using the `ROOT_FACTORY` address` and the function `deploy_gauge`.
 
-ROOT_FACTORY: https://etherscan.io/address/0x306A45a1478A000dC701A6e1f7a569afb8D9DCD6#code
+ROOT_FACTORY: [0x306A45a1478A000dC701A6e1f7a569afb8D9DCD6](https://etherscan.io/address/0x306A45a1478A000dC701A6e1f7a569afb8D9DCD6)
+
+The result of step 2 should be a gauge on the mainnet, with `child_gauge()` pointing to the gauge deployed in step 1.
