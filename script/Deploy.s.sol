@@ -30,17 +30,17 @@ abstract contract Deploy is Script {
         bytes32 salt = bytes32(0x000755fbe4a24d7478bfcfc1e561afce82d1ff6200c332bd460c10be0287c6e2);
 
         /// 1. Deploy the LiquidityGauge Implementation.
-        bytes memory gaugeImplementationCode = vm.getCode("LiquidityGauge");
+        // bytes memory gaugeImplementationCode = vm.getCode("LiquidityGauge");
 
         address gaugeImplementation;
 
         if (block.chainid == 1) {
-            gaugeImplementation = IImmutableFactory(FACTORY).deployCreate3(salt, gaugeImplementationCode);
+            gaugeImplementation = address(0xf600070C779600000C00006b99Db8eA9aD70004a);
         } else {
             gaugeImplementation = address(0);
         }
 
-        salt = bytes32(0x000755fbe4a24d7478bfcfc1e561afce82d1ff620035656a98d28a73027aa15f);
+        salt = bytes32(0x000755fbe4a24d7478bfcfc1e561afce82d1ff6200c931b1f69a8093034ed2fd);
 
         /// 2. Deploy the GaugeManager.
         IImmutableFactory(FACTORY).deployCreate3(
@@ -50,3 +50,5 @@ abstract contract Deploy is Script {
         vm.stopBroadcast();
     }
 }
+
+// ./target/release/createxcrunch create3 --caller 0x000755Fbe4A24d7478bfcFC1E561AfCE82d1ff62 --total 6 --leading 6 --either
