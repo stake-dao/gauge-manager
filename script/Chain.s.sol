@@ -32,3 +32,9 @@ address constant POLYGON_AGENT = address(0xbD2D41dBBC5A13B1c883F6c62b14924AeAef4
 address constant POLYGON_FACTORY = address(0x55a1C26CE60490A15Bdd6bD73De4F6346525e01e);
 
 contract Polygon is Deploy(POLYGON, POLYGON_AGENT, POLYGON_FACTORY) {}
+
+string constant FRAX = "frax";
+address constant FRAX_AGENT = address(0x4BbdFEd5696b3a8F6B3813506b5389959C5CDC57);
+address constant FRAX_FACTORY = address(0x0B8D6B6CeFC7Aa1C2852442e518443B1b22e1C52);
+
+contract Frax is Deploy(FRAX, FRAX_AGENT, FRAX_FACTORY) {}
