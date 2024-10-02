@@ -58,3 +58,13 @@ Gauge manager:
 4. Call `claimManager(gauge, manager, isV1)` with the manager address. This steps is necessary to complete the migration. It'll check that the previous steps were correctly executed and set the maanger address as allowed address to provide extra rewards.
 
 If using the manager address is not possible, this process can be done using the Curve Governance veCRV, doing all the steps starting from the step 2 for the gauge.
+
+
+
+### Controller Module
+
+The controller module is a module that allows to propose and add new votes for  gauge additions in the Gauge Controller using the Stake DAO CRV Locker.
+
+| Chain    | Controller Module Address |
+|----------|------------------------|
+| Mainnet  | [0xE56cE16f36f9A92281d6296ef9Ca14c271bdE0b4](https://etherscan.io/address/0xE56cE16f36f9A92281d6296ef9Ca14c271bdE0b4) |
