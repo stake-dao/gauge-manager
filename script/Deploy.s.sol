@@ -50,5 +50,3 @@ abstract contract Deploy is Script {
         vm.stopBroadcast();
     }
 }
-
-// ./target/release/createxcrunch create3 --caller 0x000755Fbe4A24d7478bfcFC1E561AfCE82d1ff62 --total 6 --leading 6 --either
