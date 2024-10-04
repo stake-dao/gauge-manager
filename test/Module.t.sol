@@ -25,10 +25,16 @@ contract ModuleTest is Test {
 
     function test_proposeGauges() public {
         address[] memory gauges = new address[](3);
-        gauges[0] = address(1);
         gauges[1] = address(2);
         gauges[2] = address(3);
 
+        address invalidGauge = address(0xd8b712d29381748dB89c36BCa0138d7c75866ddF);
+        gauges[0] = invalidGauge;
+
+        vm.expectRevert(ControllerModule.InvalidGauge.selector);
+        controllerModule.proposeGauges(gauges);
+
+        gauges[0] = address(1);
         controllerModule.proposeGauges(gauges);
 
         uint256 day = block.timestamp / 1 days * 1 days;

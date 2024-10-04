@@ -94,7 +94,12 @@ contract ControllerModule is Module {
             if (gauge == address(0)) {
                 revert InvalidGauge();
             }
-            queuedGaugesSet.add(gauge);
+
+            try IGaugeController(GAUGE_CONTROLLER).gauge_types(gauge) {
+                revert InvalidGauge();
+            } catch {
+                queuedGaugesSet.add(gauge);
+            }
         }
 
         emit GaugesProposed(day, gauges);
