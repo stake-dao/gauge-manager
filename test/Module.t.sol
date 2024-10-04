@@ -47,7 +47,7 @@ contract ModuleTest is Test {
         controllerModule.proposeGauges(gauges);
 
         for (uint256 i = 0; i < 7; i++) {
-            gauges[i] = address(uint160(i + 1));
+            gauges[i] = address(uint160(i + 4));
         }
 
         controllerModule.proposeGauges(gauges);

@@ -3,6 +3,7 @@ pragma solidity 0.8.19;
 
 /// Libraries
 import {LibString} from "solady/src/utils/LibString.sol";
+import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 /// Project Interfaces
 import {Module} from "src/modules/Module.sol";
@@ -14,6 +15,8 @@ import {IGaugeController} from "src/interfaces/IGaugeController.sol";
 /// @title ControllerModule
 /// @notice A module for proposing and executing gauge additions through a voting mechanism
 contract ControllerModule is Module {
+    using EnumerableSet for EnumerableSet.AddressSet;
+
     /// @notice Identifier for the call script
     bytes4 public constant CALLSCRIPT_ID = 0x00000001;
 
@@ -27,7 +30,7 @@ contract ControllerModule is Module {
     address public constant GAUGE_CONTROLLER = 0x2F50D538606Fa9EDD2B11E2446BEb18C9D5846bB;
 
     /// @notice Mapping from day timestamp to an array of queued gauges
-    mapping(uint256 => address[]) public queuedGauges;
+    mapping(uint256 => EnumerableSet.AddressSet) queuedGauges;
 
     /// @notice Address of the current governance
     address public governance;
@@ -79,7 +82,9 @@ contract ControllerModule is Module {
     function proposeGauges(address[] memory gauges) external {
         uint256 day = block.timestamp / 1 days * 1 days;
 
-        if (queuedGauges[day].length + gauges.length > limitPerDay) {
+        EnumerableSet.AddressSet storage queuedGaugesSet = queuedGauges[day];
+
+        if (queuedGaugesSet.length() + gauges.length > limitPerDay) {
             revert TooManyGauges();
         }
 
@@ -89,7 +94,7 @@ contract ControllerModule is Module {
             if (gauge == address(0)) {
                 revert InvalidGauge();
             }
-            queuedGauges[day].push(gauge);
+            queuedGaugesSet.add(gauge);
         }
 
         emit GaugesProposed(day, gauges);
@@ -102,17 +107,18 @@ contract ControllerModule is Module {
             revert VotesTooEarly();
         }
 
-        address[] storage gauges = queuedGauges[day];
-        if (gauges.length == 0) {
+        EnumerableSet.AddressSet storage queuedGaugesSet = queuedGauges[day];
+
+        if (queuedGaugesSet.length() == 0) {
             revert NoQueuedGauges();
         }
 
-        bytes memory executionScript = _getExecutionScript(GAUGE_CONTROLLER, gauges);
+        bytes memory executionScript = _getExecutionScript(GAUGE_CONTROLLER, queuedGaugesSet);
 
         string memory description = "Add ";
-        for (uint256 i = 0; i < gauges.length; i++) {
-            description = LibString.concat(description, IGauge(gauges[i]).symbol());
-            if (i < gauges.length - 1) {
+        for (uint256 i = 0; i < queuedGaugesSet.length(); i++) {
+            description = LibString.concat(description, IGauge(queuedGaugesSet.at(i)).symbol());
+            if (i < queuedGaugesSet.length() - 1) {
                 description = LibString.concat(description, " ");
             }
         }
@@ -129,9 +135,9 @@ contract ControllerModule is Module {
     /// @param _gaugeController Address of the gauge controller
     /// @param _gauges Array of gauge addresses to add
     /// @return bytes The generated execution script
-    function _getExecutionScript(address _gaugeController, address[] memory _gauges)
+    function _getExecutionScript(address _gaugeController, EnumerableSet.AddressSet storage _gauges)
         internal
-        pure
+        view
         returns (bytes memory)
     {
         bytes memory callScript = abi.encodePacked(CALLSCRIPT_ID);
@@ -139,8 +145,8 @@ contract ControllerModule is Module {
         bytes memory gaugeCalldata;
         bytes memory agentCalldata;
 
-        for (uint256 i = 0; i < _gauges.length; i++) {
-            gaugeCalldata = abi.encodeWithSelector(IGaugeController.add_gauge.selector, _gauges[i], 0, 0);
+        for (uint256 i = 0; i < _gauges.length(); i++) {
+            gaugeCalldata = abi.encodeWithSelector(IGaugeController.add_gauge.selector, _gauges.at(i), 0, 0);
             agentCalldata = abi.encodeWithSelector(IAgent.execute.selector, _gaugeController, 0, gaugeCalldata);
 
             uint32 length = uint32(agentCalldata.length);
@@ -161,20 +167,32 @@ contract ControllerModule is Module {
     /// @param _day The timestamp of the day to get queued gauges for
     /// @return An array of queued gauge addresses for the specified day
     function getQueuedGauges(uint256 _day) external view returns (address[] memory) {
-        return queuedGauges[_day];
+        return queuedGauges[_day].values();
     }
 
     /// @notice Replace the queued gauges for a specific day
     /// @param _day The timestamp of the day to replace gauges for
     /// @param _gauges Array of gauge addresses to replace with
     function replaceQueuedGauges(uint256 _day, address[] memory _gauges) external onlyGovernance {
-        queuedGauges[_day] = _gauges;
+        EnumerableSet.AddressSet storage queuedGaugesSet = queuedGauges[_day];
+
+        while (queuedGaugesSet.length() > 0) {
+            queuedGaugesSet.remove(queuedGaugesSet.at(0));
+        }
+
+        for (uint256 i = 0; i < _gauges.length; i++) {
+            queuedGaugesSet.add(_gauges[i]);
+        }
     }
 
     /// @notice Cancel the queued gauges for a specific day
     /// @param _day The timestamp of the day to cancel gauges for
     function cancelQueuedVotes(uint256 _day) external onlyGovernance {
-        delete queuedGauges[_day];
+        EnumerableSet.AddressSet storage queuedGaugesSet = queuedGauges[_day];
+
+        while (queuedGaugesSet.length() > 0) {
+            queuedGaugesSet.remove(queuedGaugesSet.at(0));
+        }
     }
 
     /// @notice Initiate the governance transfer process

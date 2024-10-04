@@ -2,7 +2,8 @@
   "name": "@stake-dao/gauge-manager",
   "version": "1.0.0",
   "devDependencies": {
+    "forge-std": "github:foundry-rs/forge-std",
     "solady": "github:vectorized/solady",
-    "forge-std": "github:foundry-rs/forge-std"
+    "@openzeppelin/contracts": "4.9.6"
   }
 }
