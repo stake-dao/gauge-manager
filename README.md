@@ -67,4 +67,4 @@ The controller module is a module that allows to propose and add new votes for  
 
 | Chain    | Controller Module Address |
 |----------|------------------------|
-| Mainnet  | [0xE56cE16f36f9A92281d6296ef9Ca14c271bdE0b4](https://etherscan.io/address/0xE56cE16f36f9A92281d6296ef9Ca14c271bdE0b4) |
+| Mainnet  | [0xB3f46356Ca516664C305DAd356dDeE5491017945](https://etherscan.io/address/0xB3f46356Ca516664C305DAd356dDeE5491017945) |
