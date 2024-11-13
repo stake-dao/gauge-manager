@@ -43,10 +43,10 @@ The result of step 2 should be a gauge on the mainnet, with `child_gauge()` poin
 
 ### Migration of an existing gauge
 
-In order to migrate an existing gauge and set the manager to the gauge manager, the steps are the following:
+To migrate an existing gauge and set the manager to the gauge manager, the steps are the following:
 
 Gauge manager:
-1. On the gauge manager, call `transferManager(gauge)` with the manager address. This steps is necessary to retrieve the manager ROLE later.
+1. On the gauge manager, call `transferManager(gauge)` with the manager address. This step is necessary to retrieve the manager ROLE later.
 
 Gauge:
 
@@ -55,15 +55,15 @@ Gauge:
 
 Gauge manager:
 
-4. Call `claimManager(gauge, manager, isV1)` with the manager address. This steps is necessary to complete the migration. It'll check that the previous steps were correctly executed and set the maanger address as allowed address to provide extra rewards.
+4. Call `claimManager(gauge, manager, isV1)` with the manager address. This step is necessary to complete the migration. It'll check that the previous steps were correctly executed and set the manager's address as the allowed address to provide extra rewards.
 
-If using the manager address is not possible, this process can be done using the Curve Governance veCRV, doing all the steps starting from the step 2 for the gauge.
+If using the manager address is not possible, this process can be done using the Curve Governance veCRV, starting from step 2 for the gauge.
 
 
 
 ### Controller Module
 
-The controller module is a module that allows to propose and add new votes for  gauge additions in the Gauge Controller using the Stake DAO CRV Locker.
+The controller module allows users to propose and add new votes for  gauge additions in the Gauge Controller using the Stake DAO CRV Locker.
 
 | Chain    | Controller Module Address |
 |----------|------------------------|
