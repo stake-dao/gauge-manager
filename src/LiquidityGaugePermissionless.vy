@@ -12,6 +12,7 @@ from vyper.interfaces import ERC20
 
 implements: ERC20
 
+
 interface CRV20:
     def future_epoch_time_write() -> uint256: nonpayable
     def rate() -> uint256: view
@@ -93,10 +94,10 @@ EIP712_TYPEHASH: constant(bytes32) = keccak256("EIP712Domain(string name,string 
 EIP2612_TYPEHASH: constant(bytes32) = keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)")
 
 VERSION_HASH: constant(bytes32) = keccak256(VERSION)
-NAME_HASH: bytes32
+NAME_HASH: immutable(bytes32)
 CACHED_CHAIN_ID: immutable(uint256)
-salt: public(bytes32)
-CACHED_DOMAIN_SEPARATOR: bytes32
+salt: public(immutable(bytes32))
+CACHED_DOMAIN_SEPARATOR: immutable(bytes32)
 
 CRV: constant(address) = 0xD533a949740bb3306d119CC777fa900bA034cd52
 GAUGE_CONTROLLER: constant(address) = 0x2F50D538606Fa9EDD2B11E2446BEb18C9D5846bB
@@ -161,27 +162,21 @@ period_timestamp: public(uint256[100000000000000000000000000000])
 # 1e18 * ∫(rate(t) / totalSupply(t) dt) from 0 till checkpoint
 integrate_inv_supply: public(uint256[100000000000000000000000000000])  # bump epoch when rate() changes
 
-@external
-def __init__():
-    CACHED_CHAIN_ID = chain.id
 
 @external
-def initialize(_lp_token: address, _manager: address):
+def __init__(_lp_token: address):
     """
     @notice Contract constructor
     @param _lp_token Liquidity Pool contract address
     """
-    assert self.lp_token == empty(address), "Gauge is already initialized"
-
     self.lp_token = _lp_token
-    self.manager = _manager
     self.factory = msg.sender
+    self.manager = tx.origin
 
     symbol: String[32] = ERC20Extended(_lp_token).symbol()
     name: String[64] = concat("Curve.fi ", symbol, " Gauge Deposit")
 
     self.name = name
-    self.salt = block.prevhash
     self.symbol = concat(symbol, "-gauge")
 
     self.period_timestamp[0] = block.timestamp
@@ -190,17 +185,20 @@ def initialize(_lp_token: address, _manager: address):
         + CRV20(CRV).rate()
     )
 
-    self.NAME_HASH = keccak256(name)
-    self.CACHED_DOMAIN_SEPARATOR = keccak256(
+    NAME_HASH = keccak256(name)
+    salt = block.prevhash
+    CACHED_CHAIN_ID = chain.id
+    CACHED_DOMAIN_SEPARATOR = keccak256(
         _abi_encode(
             EIP712_TYPEHASH,
-            self.NAME_HASH,
+            NAME_HASH,
             VERSION_HASH,
-            CACHED_CHAIN_ID,
+            chain.id,
             self,
-            self.salt,
+            salt,
         )
     )
+
 
 # Internal Functions
 
@@ -211,14 +209,14 @@ def _domain_separator() -> bytes32:
         return keccak256(
             _abi_encode(
                 EIP712_TYPEHASH,
-                self.NAME_HASH,
+                NAME_HASH,
                 VERSION_HASH,
                 chain.id,
                 self,
-                self.salt,
+                salt,
             )
         )
-    return self.CACHED_DOMAIN_SEPARATOR
+    return CACHED_DOMAIN_SEPARATOR
 
 
 @internal

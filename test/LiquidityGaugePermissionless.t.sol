@@ -6,13 +6,14 @@ import "forge-std/src/StdUtils.sol";
 import "node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 interface ILiquidityGauge {
-    function initialize(address _lp_token, address _manager) external;
     function deposit_reward_token(address _reward_token, uint256 _amount) external;
     function add_reward(address _rewards_token) external;
     function totalSupply() external view returns (uint256);
     function deposit(uint256 _value) external;
     function claimable_reward(address _user, address _reward_token) external view returns (uint256);
     function claim_rewards() external;
+    function set_gauge_manager(address) external; 
+    function manager() external view returns(address);
 
     struct Reward {
         uint256 period_finish;
@@ -46,9 +47,12 @@ contract LiquidityGaugePermissionlessTest is Test {
     function setUp() public {
         // Deploy Liquidity gauge contract
         vm.createSelectFork(vm.rpcUrl("mainnet"));
-        liquidityGauge = ILiquidityGauge(deployCode("LiquidityGaugePermissionless", abi.encode(address(this))));
-        liquidityGauge.initialize(lpToken, manager);
-
+        
+        liquidityGauge = ILiquidityGauge(deployCode("LiquidityGaugePermissionless", abi.encode(lpToken)));
+        
+        vm.prank(liquidityGauge.manager());
+        liquidityGauge.set_gauge_manager(manager);
+        
         // Deal lp tokens to users
         deal(lpToken, alice, lpAmount);
         deal(lpToken, bob, lpAmount);
