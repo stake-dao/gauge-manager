@@ -9,12 +9,9 @@ Currently, Curve gauges must define a `depositor` associated with an extra rewar
 
 ## Why Make Extra Rewards Permissionless?
 
-Defining a `depositor` introduces several issues:
+Defining a `depositor` introduces **Inefficiency for Incentive Depositors**. Having a predefined depositor makes it difficult for multiple actors to collaborate or deposit, and could lead to multiple governance proposals to transfer depositor rights between actors.
 
-- **Centralization Risk**: Only the depositor has the authority to manage rewards, which limits flexibility and increases reliance on a single entity.
-- **Inefficiency for Incentive Depositors**: Having a predefined depositor makes it difficult for multiple actors to collaborate or deposit, and could lead to multiple governance proposals to transfer depositor rights between actors.
-
-Addressing these issues requires a permissionless approach, enabling any participant to deposit rewards without disrupting existing setups or requiring centralized control.
+Addressing this issue requires a permissionless approach, enabling any participant to deposit rewards without disrupting existing setups.
 
 ## Proposed Solution
 
