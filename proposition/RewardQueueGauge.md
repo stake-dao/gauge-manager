@@ -9,17 +9,12 @@ Currently, Curve gauges must define a `depositor` associated with an extra rewar
 
 ## Why Make Extra Rewards Permissionless?
 
-With the rise of various vote incentive platforms and the feature of setting a maximum price per vote, a key question has emerged: *"What should be done with unused tokens?"*
+Defining a `depositor` introduces several issues:
 
-### Possible Solutions
+- **Centralization Risk**: Only the depositor has the authority to manage rewards, which limits flexibility and increases reliance on a single entity.
+- **Inefficiency for Incentive Depositors**: Having a predefined depositor makes it difficult for multiple actors to collaborate or deposit, and could lead to multiple governance proposals to transfer depositor rights between actors.
 
-1. **Roll Over to the Next Incentive Period**
-   - Some protocols cannot adopt this approach due to governance-imposed incentive budgets per period, which must be adhered to.
-
-2. **Directly Incentivize Liquidity**
-   - Unused tokens can be deposited directly as extra rewards to incentivize liquidity providers.
-
-As many vote incentive platforms are seeking to incorporate this feature, they all require the ability to deposit extra rewards, provided these are added to the extra reward list.
+Addressing these issues requires a permissionless approach, enabling any participant to deposit rewards without disrupting existing setups or requiring centralized control.
 
 ## Proposed Solution
 
