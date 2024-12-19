@@ -79,7 +79,6 @@ event Approval:
 
 struct Reward:
     token: address
-    distributor: address
     period_finish: uint256
     rate: uint256
     last_update: uint256
@@ -685,7 +684,8 @@ def deposit_reward_token(_reward_token: address, _amount: uint256, _epoch: uint2
     @param _amount The amount of `_reward_token` being deposited
     @param _epoch The duration the rewards are distributed across.
     """
-    assert msg.sender == self.reward_data[_reward_token].distributor
+    period_finish: uint256 = self.reward_data[_reward_token].period_finish
+    assert period_finish <= block.timestamp + _epoch , "Shortening current distribution is not allowed"
 
     self._checkpoint_rewards(empty(address), self.totalSupply, False, empty(address))
 
@@ -699,7 +699,7 @@ def deposit_reward_token(_reward_token: address, _amount: uint256, _epoch: uint2
     )
     amount_received = ERC20(_reward_token).balanceOf(self) - amount_received
 
-    period_finish: uint256 = self.reward_data[_reward_token].period_finish
+    
     assert amount_received > _epoch  # dev: rate will tend to zero!
 
     if block.timestamp >= period_finish:
@@ -707,45 +707,29 @@ def deposit_reward_token(_reward_token: address, _amount: uint256, _epoch: uint2
     else:
         remaining: uint256 = period_finish - block.timestamp
         leftover: uint256 = remaining * self.reward_data[_reward_token].rate
-        self.reward_data[_reward_token].rate = (amount_received + leftover) / _epoch
+        new_rate: uint256 = (amount_received + leftover) / _epoch
+        assert new_rate > self.reward_data[_reward_token].rate, "Diluting current distribution is not allowed"
+        self.reward_data[_reward_token].rate = new_rate
 
     self.reward_data[_reward_token].last_update = block.timestamp
     self.reward_data[_reward_token].period_finish = block.timestamp + _epoch
 
 
 @external
-def add_reward(_reward_token: address, _distributor: address):
+def add_reward(_reward_token: address):
     """
     @notice Add additional rewards to be distributed to stakers
     @param _reward_token The token to add as an additional reward
-    @param _distributor Address permitted to fund this contract with the reward token
     """
     assert msg.sender in [self.manager, Factory(self.factory).admin()]  # dev: only manager or factory admin
-    assert _distributor != empty(address)  # dev: distributor cannot be zero address
 
     reward_count: uint256 = self.reward_count
     assert reward_count < MAX_REWARDS
-    assert self.reward_data[_reward_token].distributor == empty(address)
+    assert self.reward_data[_reward_token].token == empty(address)
 
-    self.reward_data[_reward_token].distributor = _distributor
+    self.reward_data[_reward_token].token = _reward_token
     self.reward_tokens[reward_count] = _reward_token
     self.reward_count = reward_count + 1
-
-
-@external
-def set_reward_distributor(_reward_token: address, _distributor: address):
-    """
-    @notice Reassign the reward distributor for a reward token
-    @param _reward_token The reward token to reassign distribution rights to
-    @param _distributor The address of the new distributor
-    """
-    current_distributor: address = self.reward_data[_reward_token].distributor
-
-    assert msg.sender in [current_distributor, Factory(self.factory).admin(), self.manager]
-    assert current_distributor != empty(address)
-    assert _distributor != empty(address)
-
-    self.reward_data[_reward_token].distributor = _distributor
 
 
 @external

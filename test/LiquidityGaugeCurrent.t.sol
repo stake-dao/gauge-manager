@@ -50,7 +50,7 @@ contract LiquidityGaugeTest is Test {
         // Deploy Liquidity gauge contract
         vm.createSelectFork(vm.rpcUrl("mainnet"));
         
-        liquidityGauge = ILiquidityGauge(deployCode("LiquidityGauge", abi.encode(lpToken, manager)));
+        liquidityGauge = ILiquidityGauge(deployCode("LiquidityGaugeCurrent", abi.encode(lpToken)));
         
         // Deal lp tokens to users
         deal(lpToken, alice, lpAmount);

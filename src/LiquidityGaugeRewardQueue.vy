@@ -718,7 +718,6 @@ def add_reward(_reward_token: address):
     """
     @notice Add additional rewards to be distributed to stakers
     @param _reward_token The token to add as an additional reward
-    @param _distributor Address permitted to fund this contract with the reward token
     """
     assert msg.sender in [self.manager, Factory(self.factory).admin()]  # dev: only manager or factory admin
 
