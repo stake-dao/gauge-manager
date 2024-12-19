@@ -109,3 +109,12 @@ The `set_reward_distributor` function has no purpose without the depositor param
 -
 -       self.reward_data[_reward_token].distributor = _distributor
 ```
+
+## Remark
+
+A malicious user could theoretically block this mechanism by depositing at a low rate for an extended period (e.g., `1` for 10 years). This would force all subsequent depositors to match or exceed the same epoch duration.
+
+To address this issue, the following measures can be implemented:
+
+1. **Set a maximum `_epoch`**: Limit the maximum duration of `_epoch` within the `deposit_reward_token` to prevent overly long deposit periods.
+2. **Use a fixed `_epoch`**: Enforce a predefined `_epoch` value within the `deposit_reward_token` function to standardize the duration for all deposits.
