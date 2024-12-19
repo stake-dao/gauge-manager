@@ -708,7 +708,7 @@ def deposit_reward_token(_reward_token: address, _amount: uint256, _epoch: uint2
         remaining: uint256 = period_finish - block.timestamp
         leftover: uint256 = remaining * self.reward_data[_reward_token].rate
         new_rate: uint256 = (amount_received + leftover) / _epoch
-        assert new_rate > self.reward_data[_reward_token].rate, "Diluting current distribution is not allowed"
+        assert new_rate >= self.reward_data[_reward_token].rate, "Diluting current distribution is not allowed"
         self.reward_data[_reward_token].rate = new_rate
 
     self.reward_data[_reward_token].last_update = block.timestamp
